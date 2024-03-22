@@ -1,0 +1,9 @@
+{
+  "arguments": {
+    "action": "registerAccont",
+    "params": {
+      "id": 374896507349,
+      "roleName": "DCEAdmin"
+    }
+  }
+}

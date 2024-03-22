@@ -18,8 +18,48 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      - name: Test
-        run: aws s3 ls
+      - name: Read package.json
+        id: package
+        uses: juliangruber/read-file-action@v1
+        with:
+          path: fourth.json
+
+      - name: Register account to SAFE
+        run: |
+          aws lambda invoke
+            --function-name arn:aws:lambda:us-east-1:604510284556:function:safeAdminApi-main
+            --invocation-type RequestResponse
+            --payload ${{ steps.package.outputs.content }}
+            --cli-binary-format raw-in-base64-out
+            --log-type Tail
+            --query 'LogResult'
+            --output text |  base64 -d
       
-      - name: Another test
-        run: aws cloudformation deploy --template-file cf_sandbox_budget.yaml --stack-name SandboxBudget --parameter-overrides EmailAddressParameter=marco.endrizzi.bz@gmail.com BudgetLimit=100
+      # - name: Create sandbox account 
+      #   run: | 
+      #     aws organizations create-account 
+      #       --email ${{ github.run_attempt }}@sandboxes.com 
+      #       --account-name SandboxTest
+      #       --role-name DCEAdmin 
+      #       --iam-user-access-to-billing ALLOW
+
+
+      # - name: Move sandbox account to sandbox OU
+      #   run: |
+      #     aws organizations move-account 
+      #       --account-id ${{ github.run_attempt }} 
+      #       --source-parent-id ${{ vars.ROOT_OU }} 
+      #       --destination-parent-id ${{ vars.SANDBOX_OU }}
+
+      # - name: Another test
+      #   run: aws cloudformation deploy --template-file cf_sandbox_budget.yaml --stack-name SandboxBudget --parameter-overrides EmailAddressParameter=marco.endrizzi.bz@gmail.com BudgetLimit=100
+
+
+
+# create-account with –role-name to create DCEAdmin role
+# move-account to change OU
+# Create an alias for every account
+# How do we do custom SCPs???
+
+# Sandbox OU = Allow All strategy -> we go and block expensive services yippie
+# Special Sandboxes OU = Allow All strategy -> we go and allow only needed services - SCP APPLIED TO ACCOUNT
