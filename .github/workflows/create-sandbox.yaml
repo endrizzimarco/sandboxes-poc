@@ -31,7 +31,6 @@ jobs:
             --invocation-type RequestResponse \
             --payload '${{ steps.package.outputs.content }}' \
             --cli-binary-format raw-in-base64-out \
-            --log-type Tail \
             --query 'LogResult' \
             --output table \
             /dev/stdout
