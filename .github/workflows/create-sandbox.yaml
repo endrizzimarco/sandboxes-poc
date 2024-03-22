@@ -22,4 +22,4 @@ jobs:
         run: aws s3 ls
       
       - name: Another test
-        run: aws deploy --template-file cf_sandbox_budget.yaml --stack-name SandboxBudget
+        run: aws cloudformation deploy --template-file cf_sandbox_budget.yaml --stack-name SandboxBudget --parameter-overrides EmailAddressParameter=marco.endrizzi.bz@gmail.com BudgetLimit=100
