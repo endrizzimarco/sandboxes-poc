@@ -1,0 +1,25 @@
+name: Create Sandbox
+
+on:
+  workflow_dispatch:
+
+jobs:
+  create_sandbox:
+    runs-on: ubuntu-latest
+  
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: AWS Credentials - Assume SDLC Role
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.GH_ASSUMABLE_AWS_ROLE }}
+          aws-secret-access-key: ${{ secrets.TARGET_ACCOUNT_AWS_ROLE }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Test
+        run: aws s3 ls
+      
+      - name: Another test
+        run: aws deploy --template-file cf_sandbox_budget.yaml --stack-name SandboxBudget
