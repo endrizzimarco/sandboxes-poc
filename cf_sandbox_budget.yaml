@@ -1,0 +1,42 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Resources:
+  Budget:
+    Type: "AWS::Budgets::Budget"
+    Properties:
+      Budget:
+        BudgetName: "SandboxSpendBudget"
+        BudgetLimit:
+          Amount: !Ref BudgetLimit
+          Unit: USD
+        TimeUnit: MONTHLY
+        BudgetType: COST
+      NotificationsWithSubscribers:
+        - Notification:
+            NotificationType: ACTUAL
+            Threshold: 50
+            ComparisonOperator: "GREATER_THAN"
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref EmailAddressParameter
+        - Notification:
+            NotificationType: ACTUAL
+            Threshold: 75
+            ComparisonOperator: "GREATER_THAN"
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref EmailAddressParameter
+        - Notification:
+            NotificationType: ACTUAL
+            Threshold: 100
+            ComparisonOperator: "GREATER_THAN"
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref EmailAddressParameter
+
+Parameters:
+  EmailAddressParameter:
+    Type: String
+    Description: "Email address to receive budget notifications"
+  BudgetLimit:
+    Type: Number
+    Description: "The Budget Limit of the sandbox account"
