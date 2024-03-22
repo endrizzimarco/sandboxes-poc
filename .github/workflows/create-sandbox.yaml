@@ -34,7 +34,7 @@ jobs:
             --log-type Tail \
             --query 'LogResult' \
             --output table \ 
-            /dev/stdout
+            outfile.txt
       
       # - name: Create sandbox account 
       #   run: | 
