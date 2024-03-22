@@ -1,4 +1,13 @@
 AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  EmailAddressParameter:
+    Type: String
+    Description: "Email address to receive budget notifications"
+  BudgetLimit:
+    Type: Number
+    Description: "The Budget Limit of the sandbox account"
+
 Resources:
   Budget:
     Type: "AWS::Budgets::Budget"
@@ -32,11 +41,3 @@ Resources:
           Subscribers:
             - SubscriptionType: EMAIL
               Address: !Ref EmailAddressParameter
-
-Parameters:
-  EmailAddressParameter:
-    Type: String
-    Description: "Email address to receive budget notifications"
-  BudgetLimit:
-    Type: Number
-    Description: "The Budget Limit of the sandbox account"
