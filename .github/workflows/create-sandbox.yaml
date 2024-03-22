@@ -33,8 +33,8 @@ jobs:
             --cli-binary-format raw-in-base64-out \
             --log-type Tail \
             --query 'LogResult' \
-            --output table \ 
-            outfile.txt
+            --output table \
+            /dev/stdout
       
       # - name: Create sandbox account 
       #   run: | 
