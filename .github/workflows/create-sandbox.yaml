@@ -29,7 +29,7 @@ jobs:
           aws lambda invoke \
             --function-name arn:aws:lambda:us-east-1:604510284556:function:safeAdminApi-main \
             --invocation-type RequestResponse \
-            --payload ${{ steps.package.outputs.content }} \
+            --payload '${{ steps.package.outputs.content }}' \
             --cli-binary-format raw-in-base64-out \
             --log-type Tail \
             --query 'LogResult' \
