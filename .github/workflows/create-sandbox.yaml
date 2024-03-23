@@ -58,7 +58,7 @@ jobs:
           role-skip-session-tagging: true
   
       - name: Create account alias - this is needed for AWS Nuke
-        run: aws iam create-account-alias --account-alias ${{ github.run_number }}
+        run: aws iam create-account-alias --account-alias testalias${{ github.run_number }}
 
       - name: Deploy AWS CloudFormation budgeting stack
         run: aws cloudformation deploy --template-file cf_sandbox_budget.yaml --stack-name SandboxBudget --parameter-overrides EmailAddressParameter=marco.endrizzi.bz@gmail.com BudgetLimit=100
