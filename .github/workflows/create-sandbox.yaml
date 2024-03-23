@@ -69,7 +69,7 @@ jobs:
 
       - name: Get lease payload
         id: get_lease_payload
-        run: echo "lease_payload=$(cat create_lease.json)" >> $GITHUB_OUTPUT
+        run: echo "lease_payload=$(cat create_lease.json) | jq" >> $GITHUB_OUTPUT
 
       - name: Lease account through SAFE
         run: |
