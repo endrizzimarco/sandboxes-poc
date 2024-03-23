@@ -57,11 +57,11 @@ jobs:
           role-to-assume: "arn:aws:iam::${{ steps.get_account_id.outputs.account_id }}:role/DCEAdmin"
           role-skip-session-tagging: true
   
-      - name: Create account alias - this is needed for AWS Nuke
+      - name: Create account alias - needed for AWS Nuke
         run: aws iam create-account-alias --account-alias testalias${{ github.run_number }}
 
-      - name: Deploy AWS CloudFormation budgeting stack
-        run: aws cloudformation deploy --template-file cf_sandbox_budget.yaml --stack-name SandboxBudget --parameter-overrides EmailAddressParameter=marco.endrizzi.bz@gmail.com BudgetLimit=100
+      # - name: Deploy AWS CloudFormation budgeting stack
+      #   run: aws cloudformation deploy --template-file cf_sandbox_budget.yaml --stack-name SandboxBudget --parameter-overrides EmailAddressParameter=marco.endrizzi.bz@gmail.com BudgetLimit=100
 
       - name: Assume AWS Credentials for Managment account
         uses: aws-actions/configure-aws-credentials@v3
