@@ -74,11 +74,13 @@ jobs:
         with:
           path: create_lease.json
 
+      - 
+
       - name: Lease account through SAFE
         run: |
           aws lambda invoke \
             --function-name arn:aws:lambda:us-east-1:604510284556:function:safeOperatorApi-main \
             --invocation-type RequestResponse \
-            --payload '${{ steps.get_lease_payload.outputs.content }}' \
+            --payload '${{ steps.lease_payload.outputs.content }}' \
             --cli-binary-format raw-in-base64-out \
             /dev/stdout
