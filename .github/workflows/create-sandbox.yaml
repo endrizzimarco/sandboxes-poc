@@ -30,11 +30,11 @@ jobs:
 
       - name: Create sandbox account
         id: create_sandbox_account
-        run: aws organizations describe-account --account-id 654654489803
+        run: aws organizations describe-account --account-id 654654489803 > aws_account.json
 
       - name: Get account ID from JSON
         id: get_account_id
-        run: echo "::set-output name=account_id::$(echo '${{ steps.create_sandbox_account.outputs }}' | jq -r '.Account.Id')"
+        run: echo "account_id=$(cat aws_account.json | jq -r '.Account.Id')" >> $GITHUB_OUTPUT
         
       - name: Test get account ID
         run: echo ${{ steps.get_account_id.outputs.account_id }}
