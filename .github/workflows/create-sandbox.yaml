@@ -18,41 +18,58 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      - name: Read package.json
-        id: package
-        uses: juliangruber/read-file-action@v1
-        with:
-          path: fourth.json
-
-      - name: Register account to SAFE
-        run: |
-          aws lambda invoke \
-            --function-name arn:aws:lambda:us-east-1:604510284556:function:safeAdminApi-main \
-            --invocation-type RequestResponse \
-            --payload '${{ steps.package.outputs.content }}' \
-            --cli-binary-format raw-in-base64-out \
-            --query 'LogResult' \
-            --output table \
-            /dev/stdout
-      
-      # - name: Create sandbox account 
+      # - name: Create sandbox account
+      #   id: create_sandbox_account
       #   run: | 
-      #     aws organizations create-account 
-      #       --email ${{ github.run_attempt }}@sandboxes.com 
-      #       --account-name SandboxTest
-      #       --role-name DCEAdmin 
+      #     aws organizations create-account \
+      #       --email ${{ github.run_attempt }}@sandboxes.com \
+      #       --account-name SandboxTest \
+      #       --role-name DCEAdmin \
       #       --iam-user-access-to-billing ALLOW
+      #       --output json
 
+      - name: Create sandbox account
+        id: create_sandbox_account
+        run: aws organizations describe-account --account-id 654654489803
+
+      - name: Get account ID from JSON
+        id: get_account_id
+        run: echo "::set-output name=account_id::$(echo '${{ steps.create_sandbox_account.outputs }}' | jq -r '.Account.Id')"
+        
+      - name: Test get account ID
+        run: echo ${{ steps.get_account_id.outputs.account_id }}
 
       # - name: Move sandbox account to sandbox OU
       #   run: |
-      #     aws organizations move-account 
-      #       --account-id ${{ github.run_attempt }} 
-      #       --source-parent-id ${{ vars.ROOT_OU }} 
-      #       --destination-parent-id ${{ vars.SANDBOX_OU }}
+      #     aws organizations move-account \
+      #       --account-id ${{ github.run_attempt }} \
+      #       --source-parent-id ${{ vars.ROOT_OU }} \
+      #       --destination-parent-id ${{ vars.SANDBOX_OU }} \
 
-      # - name: Another test
+      # TODO: assume credentials for the child
+      
+      # - name: Create account alias - this is needed for AWS Nuke
+      #   run: aws iam create-account-alias --account-alias sandbox-attempt
+
+      # - name: Deploy budgeting
       #   run: aws cloudformation deploy --template-file cf_sandbox_budget.yaml --stack-name SandboxBudget --parameter-overrides EmailAddressParameter=marco.endrizzi.bz@gmail.com BudgetLimit=100
+
+      # - name: Read JSON file
+      #   id: package
+      #   uses: juliangruber/read-file-action@v1
+      #   with:
+      #     path: fourth.json
+
+      # - name: Register account to SAFE
+      #   run: |
+      #     aws lambda invoke \
+      #       --function-name arn:aws:lambda:us-east-1:604510284556:function:safeAdminApi-main \
+      #       --invocation-type RequestResponse \
+      #       --payload '${{ steps.package.outputs.content }}' \
+      #       --cli-binary-format raw-in-base64-out \
+      #       --query 'LogResult' \
+      #       --output json \
+      #       /dev/stdout
 
 
 
