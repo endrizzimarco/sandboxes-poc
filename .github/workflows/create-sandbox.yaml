@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Test run id 
-        run: echo "${{github.run_id }}"
+        run: echo "${{github.run_number }} ${{github.run_attempt}}"
 
       # - name: Assume AWS Credentials for Managment account
       #   uses: aws-actions/configure-aws-credentials@v3
