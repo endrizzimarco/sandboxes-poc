@@ -11,12 +11,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      # - name: Assume AWS Credentials for Managment account
-      #   uses: aws-actions/configure-aws-credentials@v3
-      #   with:
-      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     aws-region: ${{ vars.AWS_REGION }}
+      - name: Assume AWS Credentials for Managment account
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
 
       # - name: Create sandbox account
       #   id: create_sandbox_account
@@ -65,8 +65,6 @@ jobs:
             --invocation-type RequestResponse \
             --payload '{"arguments": {"action": "registerAccount", "paramJson": "{\"id\": \"374896507349\", \"roleName\": \"DCEAdmin\"}"}'\
             --cli-binary-format raw-in-base64-out \
-            --query 'LogResult' \
-            --output json \
             /dev/stdout
 
       - name: Lease account through SAFE
@@ -76,6 +74,4 @@ jobs:
             --invocation-type RequestResponse \
             --payload 'cat create_lease.json' \
             --cli-binary-format raw-in-base64-out \
-            --query 'LogResult' \
-            --output json \
             /dev/stdout
