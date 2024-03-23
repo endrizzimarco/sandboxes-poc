@@ -30,7 +30,7 @@ jobs:
 
       - name: Create sandbox account
         id: create_sandbox_account
-        run: aws organizations describe-account --account-id 654654489803 > aws_account.json
+        run: aws organizations describe-account --account-id 992382657132 > aws_account.json
 
       - name: Get account ID from JSON
         id: get_account_id
