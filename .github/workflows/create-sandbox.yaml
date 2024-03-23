@@ -11,88 +11,85 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Test run id 
-        run: echo "${{github.run_number }} ${{github.run_attempt}}"
+      - name: Assume AWS Credentials for Managment account
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
 
-      # - name: Assume AWS Credentials for Managment account
-      #   uses: aws-actions/configure-aws-credentials@v3
-      #   with:
-      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     aws-region: ${{ vars.AWS_REGION }}
+      - name: Create sandbox account
+        run: | 
+          aws organizations create-account \
+            --email ${{ github.run_number }}@sandboxes.com \
+            --account-name SandboxTest-${{github.run_number}} \
+            --role-name DCEAdmin \
+            --iam-user-access-to-billing ALLOW > aws_account_request.json
 
-      # - name: Create sandbox account
-      #   run: | 
-      #     aws organizations create-account \
-      #       --email ${{ github.run_number }}@sandboxes.com \
-      #       --account-name SandboxTest-${{github.run_number}} \
-      #       --role-name DCEAdmin \
-      #       --iam-user-access-to-billing ALLOW > aws_account_request.json
-
-      # - name: Get request ID from JSON
-      #   id: get_request_id
-      #   run: echo "request_id=$(cat aws_account_request.json | jq -r '.CreateAccountStatus.Id')" >> $GITHUB_OUTPUT
+      - name: Get request ID from JSON
+        id: get_request_id
+        run: echo "request_id=$(cat aws_account_request.json | jq -r '.CreateAccountStatus.Id')" >> $GITHUB_OUTPUT
         
-      # - name: Wait for account creation to be finished
-      #   run: |
-      #     until [ $(cat aws_account.json | jq -r '.CreateAccountStatus.State') == "SUCCEEDED" ]; do
-      #       sleep 2
-      #       echo "Waiting for account creation to be finished..."
-      #       aws organizations describe-create-account-status \
-      #         --create-account-request-id ${{ steps.get_request_id.outputs.request_id }} > aws_account.json
-      #     done
+      - name: Wait for account creation to be finished
+        run: |
+          until [ $(cat aws_account.json | jq -r '.CreateAccountStatus.State') == "SUCCEEDED" ]; do
+            sleep 2
+            echo "Waiting for account creation to be finished..."
+            aws organizations describe-create-account-status \
+              --create-account-request-id ${{ steps.get_request_id.outputs.request_id }} > aws_account.json
+          done
 
-      # - name: Get account ID from JSON
-      #   id: get_account_id
-      #   run: echo "account_id=$(cat aws_account.json | jq -r '.CreateAccountStatus.AccountId')" >> $GITHUB_OUTPUT
+      - name: Get account ID from JSON
+        id: get_account_id
+        run: echo "account_id=$(cat aws_account.json | jq -r '.CreateAccountStatus.AccountId')" >> $GITHUB_OUTPUT
 
-      # - name: Move sandbox account to sandbox OU
-      #   run: |
-      #     aws organizations move-account \
-      #       --account-id  ${{ steps.get_account_id.outputs.account_id }} \
-      #       --source-parent-id ${{ vars.ROOT_OU }} \
-      #       --destination-parent-id ${{ vars.SANDBOX_OU }}
+      - name: Move sandbox account to sandbox OU
+        run: |
+          aws organizations move-account \
+            --account-id  ${{ steps.get_account_id.outputs.account_id }} \
+            --source-parent-id ${{ vars.ROOT_OU }} \
+            --destination-parent-id ${{ vars.SANDBOX_OU }}
 
-      # - name: Assume AWS Credentials for created Sandbox account
-      #   uses: aws-actions/configure-aws-credentials@v4
-      #   with:
-      #     aws-region: ${{ vars.AWS_REGION }}
-      #     role-to-assume: "arn:aws:iam::${{ steps.get_account_id.outputs.account_id }}:role/DCEAdmin"
-      #     role-skip-session-tagging: true
+      - name: Assume AWS Credentials for created Sandbox account
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: "arn:aws:iam::${{ steps.get_account_id.outputs.account_id }}:role/DCEAdmin"
+          role-skip-session-tagging: true
   
-      # - name: Create account alias - this is needed for AWS Nuke
-      #   run: aws iam create-account-alias --account-alias ${{ github.run_number }}
+      - name: Create account alias - this is needed for AWS Nuke
+        run: aws iam create-account-alias --account-alias ${{ github.run_number }}
 
-      # - name: Deploy AWS CloudFormation budgeting stack
-      #   run: aws cloudformation deploy --template-file cf_sandbox_budget.yaml --stack-name SandboxBudget --parameter-overrides EmailAddressParameter=marco.endrizzi.bz@gmail.com BudgetLimit=100
+      - name: Deploy AWS CloudFormation budgeting stack
+        run: aws cloudformation deploy --template-file cf_sandbox_budget.yaml --stack-name SandboxBudget --parameter-overrides EmailAddressParameter=marco.endrizzi.bz@gmail.com BudgetLimit=100
 
-      # - name: Assume AWS Credentials for Managment account
-      #   uses: aws-actions/configure-aws-credentials@v3
-      #   with:
-      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     aws-region: ${{ vars.AWS_REGION }}
+      - name: Assume AWS Credentials for Managment account
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
 
-      # - name: Register account to SAFE
-      #   run: |
-      #     aws lambda invoke \
-      #       --function-name arn:aws:lambda:us-east-1:604510284556:function:safeAdminApi-main \
-      #       --invocation-type RequestResponse \
-      #       --payload '{"arguments": {"action": "registerAccount", "paramJson": "{\"id\": \"374896507349\", \"roleName\": \"DCEAdmin\"}"}}' \
-      #       --cli-binary-format raw-in-base64-out \
-      #       /dev/stdout
+      - name: Register account to SAFE
+        run: |
+          aws lambda invoke \
+            --function-name arn:aws:lambda:us-east-1:604510284556:function:safeAdminApi-main \
+            --invocation-type RequestResponse \
+            --payload '{"arguments": {"action": "registerAccount", "paramJson": "{\"id\": \"374896507349\", \"roleName\": \"DCEAdmin\"}"}}' \
+            --cli-binary-format raw-in-base64-out \
+            /dev/stdout
 
-      # - name: Get lease payload
-      #   id: lease_payload
-      #   uses: juliangruber/read-file-action@v1
-      #   with:
-      #     path: create_lease.json
+      - name: Get lease payload
+        id: lease_payload
+        uses: juliangruber/read-file-action@v1
+        with:
+          path: create_lease.json
 
-      # - name: Lease account through SAFE
-      #   run: |
-      #     aws lambda invoke \
-      #       --function-name arn:aws:lambda:us-east-1:604510284556:function:safeOperatorApi-main \
-      #       --invocation-type RequestResponse \
-      #       --payload '${{ steps.lease_payload.outputs.content }}' \
-      #       --cli-binary-format raw-in-base64-out \
-      #       /dev/stdout
+      - name: Lease account through SAFE
+        run: |
+          aws lambda invoke \
+            --function-name arn:aws:lambda:us-east-1:604510284556:function:safeOperatorApi-main \
+            --invocation-type RequestResponse \
+            --payload '${{ steps.lease_payload.outputs.content }}' \
+            --cli-binary-format raw-in-base64-out \
+            /dev/stdout
