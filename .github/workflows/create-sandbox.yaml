@@ -56,6 +56,7 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: "arn:aws:iam::${{ steps.get_account_id.outputs.account_id }}:role/DCEAdmin"
           role-skip-session-tagging: true
+          unset-current-credentials: true
   
       - name: Create account alias - needed for AWS Nuke
         run: aws iam create-account-alias --account-alias testalias${{ github.run_number }}
@@ -69,6 +70,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
+          unset-current-credentials: true
 
       - name: Register account to SAFE
         run: |
@@ -78,6 +80,23 @@ jobs:
             --payload '{"arguments": {"action": "registerAccount", "paramJson": "{\"id\": \"${{ steps.get_account_id.outputs.account_id }}\", \"roleName\": \"DCEAdmin\"}"}}' \
             --cli-binary-format raw-in-base64-out \
             /dev/stdout
+
+
+      - name: Wait for account to be in a `READY` state
+        run: |
+          until [ $safe_account_status == "READY" ]; do
+            echo "Waiting for account to be in a `READY` state in SAFE..."
+            sleep 10
+            aws lambda invoke \
+              --function-name arn:aws:lambda:us-east-1:604510284556:function:safeAdminApi-main \
+              --invocation-type RequestResponse \
+              --payload '{"arguments": {"action":"listAccounts"}}' \
+              --cli-binary-format raw-in-base64-out \
+              response.json
+            parsed_json=$(cat test.json | sed 's/\\"/"/g; s/^"//; s/"$//')
+            accounts=$(echo "$parsed_json" | jq -r '.body.accounts')
+            safe_account_status=$(echo "$accounts" | jq '.[] | select(.id == "${{steps.get_account_id.outputs.account_id }}") | .accountStatus')
+          done
 
       - name: Get lease payload
         id: lease_payload
