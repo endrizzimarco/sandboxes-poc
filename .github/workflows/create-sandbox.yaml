@@ -35,16 +35,13 @@ jobs:
       - name: Get account ID from JSON
         id: get_account_id
         run: echo "account_id=$(cat aws_account.json | jq -r '.Account.Id')" >> $GITHUB_OUTPUT
-        
-      - name: Test get account ID
-        run: echo ${{ steps.get_account_id.outputs.account_id }}
 
-      # - name: Move sandbox account to sandbox OU
-      #   run: |
-      #     aws organizations move-account \
-      #       --account-id ${{ github.run_attempt }} \
-      #       --source-parent-id ${{ vars.ROOT_OU }} \
-      #       --destination-parent-id ${{ vars.SANDBOX_OU }} \
+      - name: Move sandbox account to sandbox OU
+        run: |
+          aws organizations move-account \
+            --account-id  ${{ steps.get_account_id.outputs.account_id }} \
+            --source-parent-id ${{ vars.ROOT_OU }} \
+            --destination-parent-id ${{ vars.SANDBOX_OU }} \
 
       # TODO: assume credentials for the child
       
