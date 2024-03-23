@@ -74,8 +74,6 @@ jobs:
         with:
           path: create_lease.json
 
-      - 
-
       - name: Lease account through SAFE
         run: |
           aws lambda invoke \
