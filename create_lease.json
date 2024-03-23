@@ -1,0 +1,6 @@
+{
+  "arguments": {
+    "action": "createLease",
+    "paramJson": "{\"budgetAmount\": 5, \"expiresOn\": 1713884369, \"principalId\": \"jorkataiwanow+gmail+com\", \"budgetNotificationEmails\": [\"jorkataiwanow@gmail.com\"], \"budgetCurrency\": \"USD\", \"user\": \"jorkataiwanow@gmail.com\"}"
+  }
+}

@@ -11,12 +11,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ vars.AWS_REGION }}
+      # - name: Assume AWS Credentials for Managment account
+      #   uses: aws-actions/configure-aws-credentials@v3
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: ${{ vars.AWS_REGION }}
 
       # - name: Create sandbox account
       #   id: create_sandbox_account
@@ -25,61 +25,53 @@ jobs:
       #       --email ${{ github.run_attempt }}@sandboxes.com \
       #       --account-name SandboxTest \
       #       --role-name DCEAdmin \
-      #       --iam-user-access-to-billing ALLOW
-      #       --output json
+      #       --iam-user-access-to-billing ALLOW > aws_account.json
 
-      - name: Create sandbox account
-        id: create_sandbox_account
-        run: aws organizations describe-account --account-id 992382657132 > aws_account.json
-
-      - name: Get account ID from JSON
-        id: get_account_id
-        run: echo "account_id=$(cat aws_account.json | jq -r '.Account.Id')" >> $GITHUB_OUTPUT
+      # - name: Get account ID from JSON
+      #   id: get_account_id
+      #   run: echo "account_id=$(cat aws_account.json | jq -r '.AccountId')" >> $GITHUB_OUTPUT
 
       # - name: Move sandbox account to sandbox OU
       #   run: |
       #     aws organizations move-account \
       #       --account-id  ${{ steps.get_account_id.outputs.account_id }} \
       #       --source-parent-id ${{ vars.ROOT_OU }} \
-      #       --destination-parent-id ${{ vars.SANDBOX_OU }} \
+      #       --destination-parent-id ${{ vars.SANDBOX_OU }}
 
-      - name: AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: "arn:aws:iam::${{ steps.get_account_id.outputs.account_id }}:role/DCEAdmin"
-          role-skip-session-tagging: true
+      # - name: Assume AWS Credentials for created Sandbox account
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     aws-region: ${{ vars.AWS_REGION }}
+      #     role-to-assume: "arn:aws:iam::${{ steps.get_account_id.outputs.account_id }}:role/DCEAdmin"
+      #     role-skip-session-tagging: true
   
-      - name: Create account alias - this is needed for AWS Nuke
-        run: aws iam create-account-alias --account-alias sandbox-attempt
+      # - name: Create account alias - this is needed for AWS Nuke
+      #   run: aws iam create-account-alias --account-alias sandbox-attempt
 
-      - name: Deploy budgeting
-        run: aws cloudformation deploy --template-file cf_sandbox_budget.yaml --stack-name SandboxBudget --parameter-overrides EmailAddressParameter=marco.endrizzi.bz@gmail.com BudgetLimit=100
+      # - name: Deploy AWS CloudFormation budgeting stack
+      #   run: aws cloudformation deploy --template-file cf_sandbox_budget.yaml --stack-name SandboxBudget --parameter-overrides EmailAddressParameter=marco.endrizzi.bz@gmail.com BudgetLimit=100
 
-      - name: AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ vars.AWS_REGION }}
+      # - name: Assume AWS Credentials for Managment account
+      #   uses: aws-actions/configure-aws-credentials@v3
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: ${{ vars.AWS_REGION }}
 
-      # - name: Register account to SAFE
-      #   run: |
-      #     aws lambda invoke \
-      #       --function-name arn:aws:lambda:us-east-1:604510284556:function:safeAdminApi-main \
-      #       --invocation-type RequestResponse \
-      #       --payload 'cat fourth.json' \
-      #       --cli-binary-format raw-in-base64-out \
-      #       --query 'LogResult' \
-      #       --output json \
-      #       /dev/stdout
+      - name: Register account to SAFE
+        run: |
+          aws lambda invoke \
+            --function-name arn:aws:lambda:us-east-1:604510284556:function:safeAdminApi-main \
+            --invocation-type RequestResponse \
+            --payload '{"arguments": {"action": "registerAccount", "paramJson": "{\"id\": \"374896507349\", \"roleName\": \"DCEAdmin\"}"}'\
+            --cli-binary-format raw-in-base64-out \
+            /dev/stdout
 
-
-
-# create-account with –role-name to create DCEAdmin role
-# move-account to change OU
-# Create an alias for every account
-# How do we do custom SCPs???
-
-# Sandbox OU = Allow All strategy -> we go and block expensive services yippie
-# Special Sandboxes OU = Allow All strategy -> we go and allow only needed services - SCP APPLIED TO ACCOUNT
+      - name: Lease account through SAFE
+        run: |
+          aws lambda invoke \
+            --function-name arn:aws:lambda:us-east-1:604510284556:function:safeOperatorApi-main \
+            --invocation-type RequestResponse \
+            --payload 'cat create_lease.json' \
+            --cli-binary-format raw-in-base64-out \
+            /dev/stdout

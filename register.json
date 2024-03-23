@@ -1,0 +1,6 @@
+{
+  "arguments": {
+    "action": "registerAccount",
+    "paramJson": "{\"id\": \"374896507349\", \"roleName\": \"DCEAdmin\"}"
+  }
+}
