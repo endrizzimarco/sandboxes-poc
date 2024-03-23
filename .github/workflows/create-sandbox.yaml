@@ -65,6 +65,8 @@ jobs:
             --invocation-type RequestResponse \
             --payload '{"arguments": {"action": "registerAccount", "paramJson": "{\"id\": \"374896507349\", \"roleName\": \"DCEAdmin\"}"}'\
             --cli-binary-format raw-in-base64-out \
+            --query 'LogResult' \
+            --output json \
             /dev/stdout
 
       - name: Lease account through SAFE
@@ -74,4 +76,6 @@ jobs:
             --invocation-type RequestResponse \
             --payload 'cat create_lease.json' \
             --cli-binary-format raw-in-base64-out \
+            --query 'LogResult' \
+            --output json \
             /dev/stdout
