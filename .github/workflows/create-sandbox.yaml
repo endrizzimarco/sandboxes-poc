@@ -81,7 +81,7 @@ jobs:
 
       - name: Wait for account to be in a `READY` state
         run: |
-          until [[ $safe_account_status == "Ready" ]]; do
+          until [[ $safe_account_status == *"Ready"* ]]; do
             echo "Waiting for account to be in a READY state in SAFE..."
             sleep 10
             aws lambda invoke \
@@ -93,7 +93,6 @@ jobs:
             parsed_json=$(cat response.json | sed 's/\\"/"/g; s/^"\(.*\)"$/\1/; s/\\\\"//g')
             accounts=$(echo "$parsed_json" | jq -r '.body.accounts')
             safe_account_status=$(echo "$accounts" | jq '.[] | select(.id == "992382657132") | .accountStatus')
-            echo $safe_account_status
           done
 
       - name: Get lease payload
