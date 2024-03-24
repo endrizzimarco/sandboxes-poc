@@ -50,18 +50,18 @@ jobs:
       #       --source-parent-id ${{ vars.ROOT_OU }} \
       #       --destination-parent-id ${{ vars.SANDBOX_OU }}
 
-      # - name: Assume AWS Credentials for created Sandbox account
-      #   uses: aws-actions/configure-aws-credentials@v4
-      #   with:
-      #     aws-region: ${{ vars.AWS_REGION }}
-      #     role-to-assume: "arn:aws:iam::${{ steps.get_account_id.outputs.account_id }}:role/DCEAdmin"
-      #     role-skip-session-tagging: true
+      - name: Assume AWS Credentials for created Sandbox account
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: "arn:aws:iam::992382657132:role/DCEAdmin"
+          role-skip-session-tagging: true
   
       # - name: Create account alias - needed for AWS Nuke
       #   run: aws iam create-account-alias --account-alias testalias${{ github.run_number }}
 
-      # - name: Deploy AWS CloudFormation budgeting stack
-      #   run: aws cloudformation deploy --template-file cf_sandbox_budget.yaml --stack-name SandboxBudget --parameter-overrides EmailAddressParameter=marco.endrizzi.bz@gmail.com BudgetLimit=100
+      - name: Deploy AWS CloudFormation budgeting stack
+        run: aws cloudformation deploy --template-file cf_sandbox_budget.yaml --stack-name SandboxBudget --parameter-overrides EmailAddressParameter=marco.endrizzi.bz@gmail.com BudgetLimit=100
 
       # - name: Assume AWS Credentials for Managment account
       #   uses: aws-actions/configure-aws-credentials@v3
@@ -79,33 +79,33 @@ jobs:
       #       --cli-binary-format raw-in-base64-out \
       #       /dev/stdout
 
-      - name: Wait for account to be in a `READY` state
-        run: |
-          until [[ $safe_account_status == *"Ready"* ]]; do
-            echo "Waiting for account to be in a READY state in SAFE..."
-            sleep 10
-            aws lambda invoke \
-              --function-name arn:aws:lambda:us-east-1:604510284556:function:safeAdminApi-main \
-              --invocation-type RequestResponse \
-              --payload '{"arguments": {"action":"listAccounts"}}' \
-              --cli-binary-format raw-in-base64-out \
-              response.json > /dev/null
-            parsed_json=$(cat response.json | sed 's/\\"/"/g; s/^"\(.*\)"$/\1/; s/\\\\"//g')
-            accounts=$(echo "$parsed_json" | jq -r '.body.accounts')
-            safe_account_status=$(echo "$accounts" | jq '.[] | select(.id == "992382657132") | .accountStatus')
-          done
+      # - name: Wait for account to be in a `READY` state
+      #   run: |
+      #     until [[ $safe_account_status == *"Ready"* ]]; do
+      #       echo "Waiting for account to be in a READY state in SAFE..."
+      #       sleep 10
+      #       aws lambda invoke \
+      #         --function-name arn:aws:lambda:us-east-1:604510284556:function:safeAdminApi-main \
+      #         --invocation-type RequestResponse \
+      #         --payload '{"arguments": {"action":"listAccounts"}}' \
+      #         --cli-binary-format raw-in-base64-out \
+      #         response.json > /dev/null
+      #       parsed_json=$(cat response.json | sed 's/\\"/"/g; s/^"\(.*\)"$/\1/; s/\\\\"//g')
+      #       accounts=$(echo "$parsed_json" | jq -r '.body.accounts')
+      #       safe_account_status=$(echo "$accounts" | jq '.[] | select(.id == "${{ steps.get_account_id.outputs.account_id }}") | .accountStatus')
+      #     done
 
-      - name: Get lease payload
-        id: lease_payload
-        uses: juliangruber/read-file-action@v1
-        with:
-          path: create_lease.json
+      # - name: Get lease payload
+      #   id: lease_payload
+      #   uses: juliangruber/read-file-action@v1
+      #   with:
+      #     path: create_lease.json
 
-      - name: Lease account through SAFE
-        run: |
-          aws lambda invoke \
-            --function-name arn:aws:lambda:us-east-1:604510284556:function:safeOperatorApi-main \
-            --invocation-type RequestResponse \
-            --payload '${{ steps.lease_payload.outputs.content }}' \
-            --cli-binary-format raw-in-base64-out \
-            /dev/stdout
+      # - name: Lease account through SAFE
+      #   run: |
+      #     aws lambda invoke \
+      #       --function-name arn:aws:lambda:us-east-1:604510284556:function:safeOperatorApi-main \
+      #       --invocation-type RequestResponse \
+      #       --payload '${{ steps.lease_payload.outputs.content }}' \
+      #       --cli-binary-format raw-in-base64-out \
+      #       /dev/stdout
