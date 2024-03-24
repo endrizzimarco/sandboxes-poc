@@ -90,7 +90,7 @@ jobs:
               --payload '{"arguments": {"action":"listAccounts"}}' \
               --cli-binary-format raw-in-base64-out \
               response.json
-            parsed_json=$(cat response.json | sed 's/\\"/"/g; s/^"//; s/"$//')
+            parsed_json=$(cat response.json | sed 's/\\"/"/g; s/^"\(.*\)"$/\1/; s/\\\\"//g')
             accounts=$(echo "$parsed_json" | jq -r '.body.accounts')
             safe_account_status=$(echo "$accounts" | jq '.[] | select(.id == "992382657132") | .accountStatus')
           done
